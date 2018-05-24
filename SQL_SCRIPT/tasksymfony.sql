@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 23-05-2018 a las 23:09:23
+-- Tiempo de generación: 24-05-2018 a las 07:32:44
 -- Versión del servidor: 10.2.14-MariaDB
 -- Versión de PHP: 7.2.4
 
@@ -127,7 +127,7 @@ CREATE TABLE `user` (
 
 INSERT INTO `user` (`id`, `full_name`, `username`, `email`, `password`, `roles`) VALUES
 (1, 'Eric Zeidan', 'ezeidan', 'k2klettern@gmail.com', '$2y$13$1w/NDIti6Vj8tvqsXTbiOOK/gL/hbe/uafa.WNxr16icITLnQMvRC', '[\"ROLE_ADMIN\"]'),
-(2, 'An User', 'an_user', 'an_user@symfony.com', '$2y$13$slYMOhZwZGT3JV8fUA8Vwu4lg2qpU6kyO2wTz5302GX3tsdUMGNyS', '[\"ROLE_USER\"]');
+(2, 'An User', 'an_user', 'an_user@symfony.com', '$2y$13$slYMOhZwZGT3JV8fUA8Vwu4lg2qpU6kyO2wTz5302GX3tsdUMGNyS', '[\"ROLE_ADMIN\"]');
 
 --
 -- Índices para tablas volcadas
