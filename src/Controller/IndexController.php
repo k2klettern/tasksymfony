@@ -30,11 +30,11 @@ class IndexController extends Controller
 	}
 
 	/**
-	 * @Route("/admin", name="admin")
+	 * @Route("/backend", name="backend")
 	 */
 	public function admin()
 	{
-		return $this->render('Admin/index.html.twig');
+		return $this->render('Backend/index.html.twig');
 	}
 
 }

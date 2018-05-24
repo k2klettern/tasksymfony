@@ -28,22 +28,22 @@ class srcDevDebugProjectContainerUrlMatcher extends Symfony\Bundle\FrameworkBund
             $canonicalMethod = 'GET';
         }
 
-        if (0 === strpos($pathinfo, '/admin/new')) {
+        if (0 === strpos($pathinfo, '/backend/new')) {
             // new_registration
-            if ('/admin/new' === $pathinfo) {
+            if ('/backend/new' === $pathinfo) {
                 return array (  '_controller' => 'App\\Controller\\FormaController::new',  '_route' => 'new_registration',);
             }
 
             // newcat_registration
-            if ('/admin/newcat' === $pathinfo) {
+            if ('/backend/newcat' === $pathinfo) {
                 return array (  '_controller' => 'App\\Controller\\FormcatController::newcat',  '_route' => 'newcat_registration',);
             }
 
         }
 
-        // admin
-        if ('/admin' === $pathinfo) {
-            return array (  '_controller' => 'App\\Controller\\IndexController::admin',  '_route' => 'admin',);
+        // backend
+        if ('/backend' === $pathinfo) {
+            return array (  '_controller' => 'App\\Controller\\IndexController::admin',  '_route' => 'backend',);
         }
 
         // index
@@ -84,7 +84,40 @@ class srcDevDebugProjectContainerUrlMatcher extends Symfony\Bundle\FrameworkBund
             return array (  '_controller' => 'App\\Controller\\SecurityController::logout',  '_route' => 'security_logout',);
         }
 
-        if (0 === strpos($pathinfo, '/_')) {
+        if (0 === strpos($pathinfo, '/admin')) {
+            // easyadmin
+            if ('/admin' === $trimmedPathinfo) {
+                $ret = array (  '_controller' => 'EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AdminController::indexAction',  '_route' => 'easyadmin',);
+                if ('/' === substr($pathinfo, -1)) {
+                    // no-op
+                } elseif ('GET' !== $canonicalMethod) {
+                    goto not_easyadmin;
+                } else {
+                    return array_replace($ret, $this->redirect($rawPathinfo.'/', 'easyadmin'));
+                }
+
+                return $ret;
+            }
+            not_easyadmin:
+
+            // admin
+            if ('/admin' === $trimmedPathinfo) {
+                $ret = array (  '_controller' => 'EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AdminController::indexAction',  '_route' => 'admin',);
+                if ('/' === substr($pathinfo, -1)) {
+                    // no-op
+                } elseif ('GET' !== $canonicalMethod) {
+                    goto not_admin;
+                } else {
+                    return array_replace($ret, $this->redirect($rawPathinfo.'/', 'admin'));
+                }
+
+                return $ret;
+            }
+            not_admin:
+
+        }
+
+        elseif (0 === strpos($pathinfo, '/_')) {
             // _twig_error_test
             if (0 === strpos($pathinfo, '/_error') && preg_match('#^/_error/(?P<code>\\d+)(?:\\.(?P<_format>[^/]++))?$#sD', $pathinfo, $matches)) {
                 return $this->mergeDefaults(array_replace($matches, array('_route' => '_twig_error_test')), array (  '_controller' => 'twig.controller.preview_error:previewErrorPageAction',  '_format' => 'html',));

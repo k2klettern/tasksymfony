@@ -32,6 +32,7 @@ class ComposerStaticInit30e4f6890687599d567fd70cdb3b4422
         ),
         'T' => 
         array (
+            'Twig\\Extensions\\' => 16,
             'Twig\\' => 5,
         ),
         'S' => 
@@ -101,6 +102,10 @@ class ComposerStaticInit30e4f6890687599d567fd70cdb3b4422
         array (
             'Monolog\\' => 8,
         ),
+        'J' => 
+        array (
+            'JavierEguiluz\\Bundle\\EasyAdminBundle\\' => 37,
+        ),
         'F' => 
         array (
             'Fig\\Link\\' => 9,
@@ -109,6 +114,7 @@ class ComposerStaticInit30e4f6890687599d567fd70cdb3b4422
         array (
             'Egulias\\EmailValidator\\' => 23,
             'EasyCorp\\EasyLog\\' => 17,
+            'EasyCorp\\Bundle\\EasyAdminBundle\\' => 32,
         ),
         'D' => 
         array (
@@ -150,6 +156,10 @@ class ComposerStaticInit30e4f6890687599d567fd70cdb3b4422
         'Webmozart\\Assert\\' => 
         array (
             0 => __DIR__ . '/..' . '/webmozart/assert/src',
+        ),
+        'Twig\\Extensions\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/twig/extensions/src',
         ),
         'Twig\\' => 
         array (
@@ -387,6 +397,10 @@ class ComposerStaticInit30e4f6890687599d567fd70cdb3b4422
         array (
             0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
         ),
+        'JavierEguiluz\\Bundle\\EasyAdminBundle\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/easycorp/easyadmin-bundle/legacy',
+        ),
         'Fig\\Link\\' => 
         array (
             0 => __DIR__ . '/..' . '/fig/link-util/src',
@@ -398,6 +412,10 @@ class ComposerStaticInit30e4f6890687599d567fd70cdb3b4422
         'EasyCorp\\EasyLog\\' => 
         array (
             0 => __DIR__ . '/..' . '/easycorp/easy-log-handler/src',
+        ),
+        'EasyCorp\\Bundle\\EasyAdminBundle\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/easycorp/easyadmin-bundle/src',
         ),
         'Doctrine\\ORM\\' => 
         array (
@@ -460,6 +478,10 @@ class ComposerStaticInit30e4f6890687599d567fd70cdb3b4422
     public static $prefixesPsr0 = array (
         'T' => 
         array (
+            'Twig_Extensions_' => 
+            array (
+                0 => __DIR__ . '/..' . '/twig/extensions/lib',
+            ),
             'Twig_' => 
             array (
                 0 => __DIR__ . '/..' . '/twig/twig/lib',
@@ -470,6 +492,10 @@ class ComposerStaticInit30e4f6890687599d567fd70cdb3b4422
             'ProxyManager\\' => 
             array (
                 0 => __DIR__ . '/..' . '/ocramius/proxy-manager/src',
+            ),
+            'Pagerfanta\\' => 
+            array (
+                0 => __DIR__ . '/..' . '/pagerfanta/pagerfanta/src',
             ),
         ),
         'D' => 

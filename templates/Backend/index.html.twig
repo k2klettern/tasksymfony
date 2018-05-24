@@ -1,0 +1,12 @@
+{% block body %}
+    <h3>Willkommen {{ app.user.username }} !</h3>
+    <ul>
+        <li><a href="/">Home</a></li>
+    {% if is_granted('IS_AUTHENTICATED_REMEMBERED') %}
+        <li><a href="/logout">Ausloggen</a></li>
+    {% endif %}
+        <hr>
+        <li><a href="/backend/new">Neues Artikle</a></li>
+        <li><a href="/backend/newcat">Neues Kategory</a></li>
+    </ul>
+{% endblock %}

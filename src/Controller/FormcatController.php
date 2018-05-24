@@ -23,7 +23,7 @@ class FormcatController extends Controller
 {
 
 	/**
-	 * @Route("/admin/newcat", name="newcat_registration")
+	 * @Route("/backend/newcat", name="newcat_registration")
 	 */
 	public function newcat(Request $request)
 	{
@@ -64,7 +64,7 @@ class FormcatController extends Controller
 			return $this->redirectToRoute('admin');
 		}
 
-		return $this->render('Admin/formcat.html.twig', array(
+		return $this->render('Backend/formcat.html.twig', array(
 			'form' => $form->createView(),
 		));
 	}

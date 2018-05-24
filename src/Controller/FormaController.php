@@ -20,7 +20,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 class FormaController extends Controller
 {
 	/**
-	 * @Route("/admin/new", name="new_registration")
+	 * @Route("/backend/new", name="new_registration")
 	 */
 	public function new(Request $request)
 	{
@@ -65,7 +65,7 @@ class FormaController extends Controller
 			return $this->redirectToRoute('admin');
 		}
 
-		return $this->render('Admin/forma.html.twig', array(
+		return $this->render('Backend/forma.html.twig', array(
 			'form' => $form->createView(),
 		));
 	}
