@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\SCategories;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 
@@ -15,18 +16,18 @@ class IndexController extends Controller
 	 */
 	public function index()
 	{
-		$catarray = array();
+		$result = array();
 		$categs = $this->getDoctrine()
 		             ->getRepository(SCategories::class)
 		             ->findByActive(1);
-		$cats = "<ul>";
-		foreach ($categs as $cat) {
-			$uri = "images/" . $cat->getImage();
-			$cats .= "<li><a href='kategorie/" . $cat->getID() . "'><img width='50' src='" . $uri . "'>". $cat->getDescription() ."</a></li>";
+		foreach ($categs as $key => $cat) {
+			$result[$key]['uri'] = "images/" . $cat->getImage();
+			$result[$key]['catid'] = $cat->getID();
+			$result[$key]['description'] = $cat->getDescription();
+			/* $cats .= "<li><a href='kategorie/" . $cat->getID() . "'><img width='50' src='" . $uri . "'>". $cat->getDescription() ."</a></li>"; */
 		}
-		$cats .= "</ul>";
 
-		return $this->render('index.html.twig', array('cats' => $cats));
+		return $this->render('index.html.twig', array('cats' => $result));
 	}
 
 	/**

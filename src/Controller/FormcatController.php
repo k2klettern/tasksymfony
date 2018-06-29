@@ -35,13 +35,14 @@ class FormcatController extends Controller
 					 ->add('parent', ChoiceType::class, array(
 							'choices'  => $this->getParentCats(),
 							'placeholder' => 'Wähle eine Option',
-							 'label' => 'Eltern-Kategorie',
-							'required' => false
+							'label' => 'Eltern-Kategorie',
+							'required' => false,
+							'attr' => array('class' => 'form-control')
 						)
 						)
-					 ->add('image', FileType::class, array('label' => 'Kat img'))
-		             ->add('description', TextareaType::class, array('label' => 'Beschreibung'))
-		             ->add('save', SubmitType::class, array('label' => 'Kategorie speichern'))
+					 ->add('image', FileType::class, array('label' => 'Kat img', 'attr' => array('class' => 'custom-file-input')))
+		             ->add('description', TextareaType::class, array('label' => 'Beschreibung', 'attr' => array('class' => 'form-control')))
+		             ->add('save', SubmitType::class, array('label' => 'Kategorie speichern', 'attr' => array('class' => 'btn')))
 		             ->getForm();
 
 		$form->handleRequest($request);

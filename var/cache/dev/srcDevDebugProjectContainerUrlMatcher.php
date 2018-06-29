@@ -15,191 +15,166 @@ class srcDevDebugProjectContainerUrlMatcher extends Symfony\Bundle\FrameworkBund
         $this->context = $context;
     }
 
-    public function match($rawPathinfo)
+    public function match($pathinfo)
     {
-        $allow = array();
+        $allow = $allowSchemes = array();
+        if ($ret = $this->doMatch($pathinfo, $allow, $allowSchemes)) {
+            return $ret;
+        }
+        if ($allow) {
+            throw new MethodNotAllowedException(array_keys($allow));
+        }
+        if (!in_array($this->context->getMethod(), array('HEAD', 'GET'), true)) {
+            // no-op
+        } elseif ($allowSchemes) {
+            redirect_scheme:
+            $scheme = $this->context->getScheme();
+            $this->context->setScheme(key($allowSchemes));
+            try {
+                if ($ret = $this->doMatch($pathinfo)) {
+                    return $this->redirect($pathinfo, $ret['_route'], $this->context->getScheme()) + $ret;
+                }
+            } finally {
+                $this->context->setScheme($scheme);
+            }
+        } elseif ('/' !== $pathinfo) {
+            $pathinfo = '/' !== $pathinfo[-1] ? $pathinfo.'/' : substr($pathinfo, 0, -1);
+            if ($ret = $this->doMatch($pathinfo, $allow, $allowSchemes)) {
+                return $this->redirect($pathinfo, $ret['_route']) + $ret;
+            }
+            if ($allowSchemes) {
+                goto redirect_scheme;
+            }
+        }
+
+        throw new ResourceNotFoundException();
+    }
+
+    private function doMatch(string $rawPathinfo, array &$allow = array(), array &$allowSchemes = array()): ?array
+    {
+        $allow = $allowSchemes = array();
         $pathinfo = rawurldecode($rawPathinfo);
-        $trimmedPathinfo = rtrim($pathinfo, '/');
         $context = $this->context;
-        $request = $this->request ?: $this->createRequest($pathinfo);
         $requestMethod = $canonicalMethod = $context->getMethod();
 
         if ('HEAD' === $requestMethod) {
             $canonicalMethod = 'GET';
         }
 
-        if (0 === strpos($pathinfo, '/backend/new')) {
-            // new_registration
-            if ('/backend/new' === $pathinfo) {
-                return array (  '_controller' => 'App\\Controller\\FormaController::new',  '_route' => 'new_registration',);
-            }
+        switch ($pathinfo) {
+            case '/admin/':
+                // easyadmin
+                return array('_route' => 'easyadmin', '_controller' => 'EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AdminController::indexAction');
+                // admin
+                return array('_route' => 'admin', '_controller' => 'EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AdminController::indexAction');
+                break;
+            default:
+                $routes = array(
+                    '/backend/new' => array(array('_route' => 'new_registration', '_controller' => 'App\\Controller\\FormaController::new'), null, null, null),
+                    '/backend/newcat' => array(array('_route' => 'newcat_registration', '_controller' => 'App\\Controller\\FormcatController::newcat'), null, null, null),
+                    '/' => array(array('_route' => 'index', '_controller' => 'App\\Controller\\IndexController::index'), null, null, null),
+                    '/backend' => array(array('_route' => 'backend', '_controller' => 'App\\Controller\\IndexController::admin'), null, null, null),
+                    '/kategorie' => array(array('_route' => 'kategorie_list', '_controller' => 'App\\Controller\\KategorieController::list'), null, null, null),
+                    '/login' => array(array('_route' => 'security_login', '_controller' => 'App\\Controller\\SecurityController::login'), null, null, null),
+                    '/logout' => array(array('_route' => 'security_logout', '_controller' => 'App\\Controller\\SecurityController::logout'), null, null, null),
+                    '/_profiler/' => array(array('_route' => '_profiler_home', '_controller' => 'web_profiler.controller.profiler::homeAction'), null, null, null),
+                    '/_profiler/search' => array(array('_route' => '_profiler_search', '_controller' => 'web_profiler.controller.profiler::searchAction'), null, null, null),
+                    '/_profiler/search_bar' => array(array('_route' => '_profiler_search_bar', '_controller' => 'web_profiler.controller.profiler::searchBarAction'), null, null, null),
+                    '/_profiler/phpinfo' => array(array('_route' => '_profiler_phpinfo', '_controller' => 'web_profiler.controller.profiler::phpinfoAction'), null, null, null),
+                    '/_profiler/open' => array(array('_route' => '_profiler_open_file', '_controller' => 'web_profiler.controller.profiler::openAction'), null, null, null),
+                );
 
-            // newcat_registration
-            if ('/backend/newcat' === $pathinfo) {
-                return array (  '_controller' => 'App\\Controller\\FormcatController::newcat',  '_route' => 'newcat_registration',);
-            }
+                if (!isset($routes[$pathinfo])) {
+                    break;
+                }
+                list($ret, $requiredHost, $requiredMethods, $requiredSchemes) = $routes[$pathinfo];
 
-        }
-
-        // backend
-        if ('/backend' === $pathinfo) {
-            return array (  '_controller' => 'App\\Controller\\IndexController::admin',  '_route' => 'backend',);
-        }
-
-        // index
-        if ('' === $trimmedPathinfo) {
-            $ret = array (  '_controller' => 'App\\Controller\\IndexController::index',  '_route' => 'index',);
-            if ('/' === substr($pathinfo, -1)) {
-                // no-op
-            } elseif ('GET' !== $canonicalMethod) {
-                goto not_index;
-            } else {
-                return array_replace($ret, $this->redirect($rawPathinfo.'/', 'index'));
-            }
-
-            return $ret;
-        }
-        not_index:
-
-        if (0 === strpos($pathinfo, '/kategorie')) {
-            // kategorie_list
-            if ('/kategorie' === $pathinfo) {
-                return array (  '_controller' => 'App\\Controller\\KategorieController::list',  '_route' => 'kategorie_list',);
-            }
-
-            // kategorie_show
-            if (preg_match('#^/kategorie/(?P<catid>[^/]++)$#sD', $pathinfo, $matches)) {
-                return $this->mergeDefaults(array_replace($matches, array('_route' => 'kategorie_show')), array (  '_controller' => 'App\\Controller\\KategorieController::show',));
-            }
-
-        }
-
-        // security_login
-        if ('/login' === $pathinfo) {
-            return array (  '_controller' => 'App\\Controller\\SecurityController::login',  '_route' => 'security_login',);
-        }
-
-        // security_logout
-        if ('/logout' === $pathinfo) {
-            return array (  '_controller' => 'App\\Controller\\SecurityController::logout',  '_route' => 'security_logout',);
-        }
-
-        if (0 === strpos($pathinfo, '/admin')) {
-            // easyadmin
-            if ('/admin' === $trimmedPathinfo) {
-                $ret = array (  '_controller' => 'EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AdminController::indexAction',  '_route' => 'easyadmin',);
-                if ('/' === substr($pathinfo, -1)) {
-                    // no-op
-                } elseif ('GET' !== $canonicalMethod) {
-                    goto not_easyadmin;
-                } else {
-                    return array_replace($ret, $this->redirect($rawPathinfo.'/', 'easyadmin'));
+                $hasRequiredScheme = !$requiredSchemes || isset($requiredSchemes[$context->getScheme()]);
+                if ($requiredMethods && !isset($requiredMethods[$canonicalMethod]) && !isset($requiredMethods[$requestMethod])) {
+                    if ($hasRequiredScheme) {
+                        $allow += $requiredMethods;
+                    }
+                    break;
+                }
+                if (!$hasRequiredScheme) {
+                    $allowSchemes += $requiredSchemes;
+                    break;
                 }
 
                 return $ret;
-            }
-            not_easyadmin:
-
-            // admin
-            if ('/admin' === $trimmedPathinfo) {
-                $ret = array (  '_controller' => 'EasyCorp\\Bundle\\EasyAdminBundle\\Controller\\AdminController::indexAction',  '_route' => 'admin',);
-                if ('/' === substr($pathinfo, -1)) {
-                    // no-op
-                } elseif ('GET' !== $canonicalMethod) {
-                    goto not_admin;
-                } else {
-                    return array_replace($ret, $this->redirect($rawPathinfo.'/', 'admin'));
-                }
-
-                return $ret;
-            }
-            not_admin:
-
         }
 
-        elseif (0 === strpos($pathinfo, '/_')) {
-            // _twig_error_test
-            if (0 === strpos($pathinfo, '/_error') && preg_match('#^/_error/(?P<code>\\d+)(?:\\.(?P<_format>[^/]++))?$#sD', $pathinfo, $matches)) {
-                return $this->mergeDefaults(array_replace($matches, array('_route' => '_twig_error_test')), array (  '_controller' => 'twig.controller.preview_error:previewErrorPageAction',  '_format' => 'html',));
+        $matchedPathinfo = $pathinfo;
+        $regexList = array(
+            0 => '{^(?'
+                    .'|/kategorie/([^/]++)(*:26)'
+                    .'|/_(?'
+                        .'|error/(\\d+)(?:\\.([^/]++))?(*:64)'
+                        .'|wdt/([^/]++)(*:83)'
+                        .'|profiler/([^/]++)(?'
+                            .'|/(?'
+                                .'|search/results(*:128)'
+                                .'|router(*:142)'
+                                .'|exception(?'
+                                    .'|(*:162)'
+                                    .'|\\.css(*:175)'
+                                .')'
+                            .')'
+                            .'|(*:185)'
+                        .')'
+                    .')'
+                .')$}sD',
+        );
+
+        foreach ($regexList as $offset => $regex) {
+            while (preg_match($regex, $matchedPathinfo, $matches)) {
+                switch ($m = (int) $matches['MARK']) {
+                    default:
+                        $routes = array(
+                            26 => array(array('_route' => 'kategorie_show', '_controller' => 'App\\Controller\\KategorieController::show'), array('catid'), null, null),
+                            64 => array(array('_route' => '_twig_error_test', '_controller' => 'twig.controller.preview_error::previewErrorPageAction', '_format' => 'html'), array('code', '_format'), null, null),
+                            83 => array(array('_route' => '_wdt', '_controller' => 'web_profiler.controller.profiler::toolbarAction'), array('token'), null, null),
+                            128 => array(array('_route' => '_profiler_search_results', '_controller' => 'web_profiler.controller.profiler::searchResultsAction'), array('token'), null, null),
+                            142 => array(array('_route' => '_profiler_router', '_controller' => 'web_profiler.controller.router::panelAction'), array('token'), null, null),
+                            162 => array(array('_route' => '_profiler_exception', '_controller' => 'web_profiler.controller.exception::showAction'), array('token'), null, null),
+                            175 => array(array('_route' => '_profiler_exception_css', '_controller' => 'web_profiler.controller.exception::cssAction'), array('token'), null, null),
+                            185 => array(array('_route' => '_profiler', '_controller' => 'web_profiler.controller.profiler::panelAction'), array('token'), null, null),
+                        );
+
+                        list($ret, $vars, $requiredMethods, $requiredSchemes) = $routes[$m];
+
+                        foreach ($vars as $i => $v) {
+                            if (isset($matches[1 + $i])) {
+                                $ret[$v] = $matches[1 + $i];
+                            }
+                        }
+
+                        $hasRequiredScheme = !$requiredSchemes || isset($requiredSchemes[$context->getScheme()]);
+                        if ($requiredMethods && !isset($requiredMethods[$canonicalMethod]) && !isset($requiredMethods[$requestMethod])) {
+                            if ($hasRequiredScheme) {
+                                $allow += $requiredMethods;
+                            }
+                            break;
+                        }
+                        if (!$hasRequiredScheme) {
+                            $allowSchemes += $requiredSchemes;
+                            break;
+                        }
+
+                        return $ret;
+                }
+
+                if (185 === $m) {
+                    break;
+                }
+                $regex = substr_replace($regex, 'F', $m - $offset, 1 + strlen($m));
+                $offset += strlen($m);
             }
-
-            // _wdt
-            if (0 === strpos($pathinfo, '/_wdt') && preg_match('#^/_wdt/(?P<token>[^/]++)$#sD', $pathinfo, $matches)) {
-                return $this->mergeDefaults(array_replace($matches, array('_route' => '_wdt')), array (  '_controller' => 'web_profiler.controller.profiler:toolbarAction',));
-            }
-
-            if (0 === strpos($pathinfo, '/_profiler')) {
-                // _profiler_home
-                if ('/_profiler' === $trimmedPathinfo) {
-                    $ret = array (  '_controller' => 'web_profiler.controller.profiler:homeAction',  '_route' => '_profiler_home',);
-                    if ('/' === substr($pathinfo, -1)) {
-                        // no-op
-                    } elseif ('GET' !== $canonicalMethod) {
-                        goto not__profiler_home;
-                    } else {
-                        return array_replace($ret, $this->redirect($rawPathinfo.'/', '_profiler_home'));
-                    }
-
-                    return $ret;
-                }
-                not__profiler_home:
-
-                if (0 === strpos($pathinfo, '/_profiler/search')) {
-                    // _profiler_search
-                    if ('/_profiler/search' === $pathinfo) {
-                        return array (  '_controller' => 'web_profiler.controller.profiler:searchAction',  '_route' => '_profiler_search',);
-                    }
-
-                    // _profiler_search_bar
-                    if ('/_profiler/search_bar' === $pathinfo) {
-                        return array (  '_controller' => 'web_profiler.controller.profiler:searchBarAction',  '_route' => '_profiler_search_bar',);
-                    }
-
-                }
-
-                // _profiler_phpinfo
-                if ('/_profiler/phpinfo' === $pathinfo) {
-                    return array (  '_controller' => 'web_profiler.controller.profiler:phpinfoAction',  '_route' => '_profiler_phpinfo',);
-                }
-
-                // _profiler_search_results
-                if (preg_match('#^/_profiler/(?P<token>[^/]++)/search/results$#sD', $pathinfo, $matches)) {
-                    return $this->mergeDefaults(array_replace($matches, array('_route' => '_profiler_search_results')), array (  '_controller' => 'web_profiler.controller.profiler:searchResultsAction',));
-                }
-
-                // _profiler_open_file
-                if ('/_profiler/open' === $pathinfo) {
-                    return array (  '_controller' => 'web_profiler.controller.profiler:openAction',  '_route' => '_profiler_open_file',);
-                }
-
-                // _profiler
-                if (preg_match('#^/_profiler/(?P<token>[^/]++)$#sD', $pathinfo, $matches)) {
-                    return $this->mergeDefaults(array_replace($matches, array('_route' => '_profiler')), array (  '_controller' => 'web_profiler.controller.profiler:panelAction',));
-                }
-
-                // _profiler_router
-                if (preg_match('#^/_profiler/(?P<token>[^/]++)/router$#sD', $pathinfo, $matches)) {
-                    return $this->mergeDefaults(array_replace($matches, array('_route' => '_profiler_router')), array (  '_controller' => 'web_profiler.controller.router:panelAction',));
-                }
-
-                // _profiler_exception
-                if (preg_match('#^/_profiler/(?P<token>[^/]++)/exception$#sD', $pathinfo, $matches)) {
-                    return $this->mergeDefaults(array_replace($matches, array('_route' => '_profiler_exception')), array (  '_controller' => 'web_profiler.controller.exception:showAction',));
-                }
-
-                // _profiler_exception_css
-                if (preg_match('#^/_profiler/(?P<token>[^/]++)/exception\\.css$#sD', $pathinfo, $matches)) {
-                    return $this->mergeDefaults(array_replace($matches, array('_route' => '_profiler_exception_css')), array (  '_controller' => 'web_profiler.controller.exception:cssAction',));
-                }
-
-            }
-
         }
-
         if ('/' === $pathinfo && !$allow) {
             throw new Symfony\Component\Routing\Exception\NoConfigurationException();
         }
 
-        throw 0 < count($allow) ? new MethodNotAllowedException(array_unique($allow)) : new ResourceNotFoundException();
+        return null;
     }
 }

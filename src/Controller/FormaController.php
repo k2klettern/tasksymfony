@@ -32,19 +32,20 @@ class FormaController extends Controller
 		$task->setChangetime(new \DateTime('now'));
 
 		$form = $this->createFormBuilder($task)
-					->add('name', TextType::class)
-					->add('description', TextareaType::class, array('label' => 'Beschreibung'))
-					->add('shippingtime', TextType::class, array('label' => 'Lieferdauer'))
-					->add('price', MoneyType::class, array('label' => 'Preis'))
-					->add('stock', IntegerType::class, array('label' => 'Stock'))
+					->add('name', TextType::class, array('attr' => array('class' => 'form-control')))
+					->add('description', TextareaType::class, array('label' => 'Beschreibung', 'attr' => array('class' => 'form-control')))
+					->add('shippingtime', TextType::class, array('label' => 'Lieferdauer', 'attr' => array('class' => 'form-control')))
+					->add('price', MoneyType::class, array('label' => 'Preis', 'attr' => array('class' => 'form-control')))
+					->add('stock', IntegerType::class, array('label' => 'Stock', 'attr' => array('class' => 'form-control')))
 					->add('cats', ChoiceType::class, array(
 							'choices'  => $this->getParentCats(),
 							'label' => 'Kategorien',
 							'expanded' => true,
-							'multiple' => true
+							'multiple' => true,
+							'attr' => array('class' => 'form-check-input')
 						)
 					)
-		            ->add('save', SubmitType::class, array('label' => 'Artikel speichern'))
+		            ->add('save', SubmitType::class, array('label' => 'Artikel speichern', 'attr' => array('class' => 'btn')))
 		            ->getForm();
 
 		$form->handleRequest($request);

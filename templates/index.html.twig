@@ -1,14 +1,11 @@
+{% extends 'base.html.twig' %}
+
 {% block body %}
-    <ul>
-    {% if is_granted('IS_AUTHENTICATED_REMEMBERED') %}
-        <li><a href="/logout">Ausloggen</a></li>
-    {% else %}
-        <li><a href="{{ path('security_login')}}"> Einloggen</a></li>
-    {% endif %}
-    {% if is_granted('IS_AUTHENTICATED_REMEMBERED') %}
-        <li><a href="/admin">Admin</a></li>
-    {% endif %}
+    <div class="container-fluid">
+    <h4>Wählen Sie eine Kategorie</h4>
+    <ul class="list-group">
+        {% for cat in cats %}
+            <li class="list-group-item"><a href='kategorie/{{ cat.catid|e }}'><img width='50' src='{{ cat.uri|e }}'> {{ cat.description|e }}</a></li>
+        {% endfor %}
     </ul>
-    <h5>Wählen Sie eine Kategorie</h5>
-    {{ cats|raw }}
 {% endblock %}

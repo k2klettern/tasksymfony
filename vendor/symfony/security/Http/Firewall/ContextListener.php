@@ -65,10 +65,12 @@ class ContextListener implements ListenerInterface
      * Enables deauthentication during refreshUser when the user has changed.
      *
      * @param bool $logoutOnUserChange
+     *
+     * @deprecated since Symfony 4.1
      */
     public function setLogoutOnUserChange($logoutOnUserChange)
     {
-        // no-op, method to be deprecated in 4.1
+        @trigger_error(sprintf('The %s() method is deprecated since Symfony 4.1.', __METHOD__), E_USER_DEPRECATED);
     }
 
     /**
@@ -224,8 +226,7 @@ class ContextListener implements ListenerInterface
 
         try {
             $token = unserialize($serializedToken);
-        } catch (\Error $e) {
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
         }
         restore_error_handler();
         ini_set('unserialize_callback_func', $prevUnserializeHandler);

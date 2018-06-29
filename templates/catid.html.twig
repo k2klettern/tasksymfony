@@ -1,3 +1,19 @@
+{% extends 'base.html.twig' %}
+
 {% block body %}
-    {{ artikles|raw }}
+    <div class="container-fluid">
+    <h4>Kategorie</h4>
+    <ul class="list-group">
+    {% for artikle in artikles %}
+        <li class="list-group-item">
+            <ol>
+            <li>Name: {{ artikle.name|e }}</li>
+            <li>Beschreibung: {{ artikle.description|e }}</li>
+        <li>Lieferdauer: {{ artikle.shippingtime|e }}</li>
+        <li>Datum: {{ artikle.date|e }}</li>
+        <li>Preis: {{ artikle.price|e }}</li>
+        <li>Stock: {{ artikle.stock|e }}</li>
+        </ol></li>
+    {% endfor %}
+</ul>
 {% endblock %}

@@ -12,6 +12,7 @@
 namespace Symfony\Component\Serializer\Normalizer;
 
 use Symfony\Component\Serializer\Exception\CircularReferenceException;
+use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Exception\LogicException;
 use Symfony\Component\Serializer\Exception\RuntimeException;
@@ -26,7 +27,7 @@ use Symfony\Component\Serializer\SerializerAwareTrait;
  *
  * @author Kévin Dunglas <dunglas@gmail.com>
  */
-abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface
+abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerInterface, SerializerAwareInterface, CacheableSupportsMethodInterface
 {
     use ObjectToPopulateTrait;
     use SerializerAwareTrait;
@@ -36,6 +37,7 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
     const GROUPS = 'groups';
     const ATTRIBUTES = 'attributes';
     const ALLOW_EXTRA_ATTRIBUTES = 'allow_extra_attributes';
+    const DEFAULT_CONSTRUCTOR_ARGUMENTS = 'default_constructor_arguments';
 
     /**
      * @var int
@@ -146,6 +148,14 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return false;
+    }
+
+    /**
      * Detects if the configured circular reference limit is reached.
      *
      * @param object $object
@@ -202,11 +212,17 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
      * @param array         $context
      * @param bool          $attributesAsString If false, return an array of {@link AttributeMetadataInterface}
      *
+     * @throws LogicException if the 'allow_extra_attributes' context variable is false and no class metadata factory is provided
+     *
      * @return string[]|AttributeMetadataInterface[]|bool
      */
     protected function getAllowedAttributes($classOrObject, array $context, $attributesAsString = false)
     {
         if (!$this->classMetadataFactory) {
+            if (isset($context[static::ALLOW_EXTRA_ATTRIBUTES]) && !$context[static::ALLOW_EXTRA_ATTRIBUTES]) {
+                throw new LogicException(sprintf('A class metadata factory must be provided in the constructor when setting "%s" to false.', static::ALLOW_EXTRA_ATTRIBUTES));
+            }
+
             return false;
         }
 
@@ -308,6 +324,7 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
      * @return object
      *
      * @throws RuntimeException
+     * @throws MissingConstructorArgumentsException
      */
     protected function instantiateObject(array &$data, $class, array &$context, \ReflectionClass $reflectionClass, $allowedAttributes, string $format = null)
     {
@@ -338,6 +355,12 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
                     }
                 } elseif ($allowed && !$ignored && (isset($data[$key]) || array_key_exists($key, $data))) {
                     $parameterData = $data[$key];
+                    if (null === $parameterData && $constructorParameter->allowsNull()) {
+                        $params[] = null;
+                        // Don't run set for a parameter passed to the constructor
+                        unset($data[$key]);
+                        continue;
+                    }
                     try {
                         if (null !== $constructorParameter->getClass()) {
                             if (!$this->serializer instanceof DenormalizerInterface) {
@@ -348,15 +371,22 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
                         }
                     } catch (\ReflectionException $e) {
                         throw new RuntimeException(sprintf('Could not determine the class of the parameter "%s".', $key), 0, $e);
+                    } catch (MissingConstructorArgumentsException $e) {
+                        if (!$constructorParameter->getType()->allowsNull()) {
+                            throw $e;
+                        }
+                        $parameterData = null;
                     }
 
                     // Don't run set for a parameter passed to the constructor
                     $params[] = $parameterData;
                     unset($data[$key]);
+                } elseif (isset($context[static::DEFAULT_CONSTRUCTOR_ARGUMENTS][$class][$key])) {
+                    $params[] = $context[static::DEFAULT_CONSTRUCTOR_ARGUMENTS][$class][$key];
                 } elseif ($constructorParameter->isDefaultValueAvailable()) {
                     $params[] = $constructorParameter->getDefaultValue();
                 } else {
-                    throw new RuntimeException(
+                    throw new MissingConstructorArgumentsException(
                         sprintf(
                             'Cannot create an instance of %s from serialized data because its constructor requires parameter "%s" to be present.',
                             $class,

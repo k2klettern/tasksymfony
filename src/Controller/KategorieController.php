@@ -16,18 +16,17 @@ class KategorieController extends Controller
 	 */
 	public function list()
 	{
-		$catarray = array();
+		$result = array();
 		$categs = $this->getDoctrine()
 		               ->getRepository(SCategories::class)
 		               ->findByActive(1);
-		$cats = "<ul>";
-		foreach ($categs as $cat) {
-			$uri = "images/" . $cat->getImage();
-			$cats .= "<li><a href='kategorie/" . $cat->getID() . "/'><img width='50' src='" . $uri . "'>". $cat->getDescription() ."</a></li>";
+		foreach ($categs as $key => $cat) {
+			$result[$key]['uri'] = "images/" . $cat->getImage();
+			$result[$key]['catid'] = $cat->getID();
+			$result[$key]['description'] = $cat->getDescription();
 		}
-		$cats .= "</ul>";
 
-		return $this->render('index.html.twig', array('cats' => $cats));
+		return $this->render('index.html.twig', array('cats' => $result));
 	}
 
 	/**
@@ -37,7 +36,7 @@ class KategorieController extends Controller
 	 */
 	public function show($catid)
 	{
-		$artlist = array();
+		$result = array();
 		$relations = $this->getDoctrine()
 			->getRepository(SArtcatRelationships::class)
 			->findByCategoryId($catid);
@@ -53,20 +52,16 @@ class KategorieController extends Controller
 		               ->getRepository(SArticles::class)
 		               ->findById($ids);
 
-		$arts = "<ul>";
-		foreach ($artkls as $cat) {
-			$arts .= "<li><ul>";
-			$arts .= "<li>Name: " . $cat->getName() . "</li>";
-			$arts .= "<li>Beschreibung: " . $cat->getDescription() . "</li>";
-			$arts .= "<li>Lieferdauer: " .$cat->getShippingTime() . "</li>";
-			$arts .= "<li>Datum: " . $cat->getDatum()->format('Y-m-d') . "</li>";
-			$arts .= "<li>Preis: " . $cat->getPrice() . "</li>";
-			$arts .= "<li>Stock: " . $cat->getStock() . "</li>";
-			$arts .= "</ul></li><hr>";
+		foreach ($artkls as $key => $cat) {
+			$result[$key]['name'] = $cat->getName();
+			$result[$key]['description'] = $cat->getDescription();
+			$result[$key]['shippingtime'] = $cat->getShippingTime();
+			$result[$key]['date'] = $cat->getDatum()->format('Y-m-d');
+			$result[$key]['price'] = $cat->getPrice();
+			$result[$key]['stock'] = $cat->getStock();
 		}
-		$arts .= "</ul>";
 
-		return $this->render('catid.html.twig', array('artikles' => $arts));
+		return $this->render('catid.html.twig', array('artikles' => $result));
 	}
 
 }
